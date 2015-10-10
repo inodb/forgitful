@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+set -e
+
+# First argument should be config yml file
+CONFIG_FILE=$1
+if [[ -z $CONFIG_FILE ]]
+then
+    echo "Specify config file as first argument" && exit 1
+fi
+
+# from http://stackoverflow.com/questions/59895
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+# bash yaml parser from https://gist.github.com/epiloque/8cf512c6d64641bde388
+parse_yaml() {
+    local prefix=$2
+    local s
+    local w
+    local fs
+    s='[[:space:]]*'
+    w='[a-zA-Z0-9_]*'
+    fs="$(echo @|tr @ '\034')"
+    sed -ne "s|^\($s\)\($w\)$s:$s\"\(.*\)\"$s\$|\1$fs\2$fs\3|p" \
+        -e "s|^\($s\)\($w\)$s[:-]$s\(.*\)$s\$|\1$fs\2$fs\3|p" "$1" |
+    awk -F"$fs" '{
+    indent = length($1)/2;
+    vname[indent] = $2;
+    for (i in vname) {if (i > indent) {delete vname[i]}}
+        if (length($3) > 0) {
+            vn=""; for (i=0; i<indent; i++) {vn=(vn)(vname[i])("_")}
+            printf("%s%s%s=(\"%s\")\n", "'"$prefix"'",vn, $2, $3);
+        }
+    }' | sed 's/_=/+=/g'
+}
+
+eval $(parse_yaml $CONFIG_FILE)
+
+# Check all repos for changes
+for d in "${development_repos[@]}"; do
+    cd $d || (echo "Not a directory: $d" && exit 1);
+    git rev-parse > /dev/null || (echo "Not a git repo: $d" && exit 1);
+    mkdir -p $(dirname $development_tracker);
+    find . -type f | xargs -I {} ls -l '{}' > $development_tracker || (echo "find failed" && exit 1);
+    git add .forgitful/dircontents.txt;
+    git status --porcelain | grep -q '^A' && ((echo "Changes in $HOSTNAME:$d"; git status) | mail -s "Forgit smth? Changes in $HOSTNAME:$d" $development_email);
+done
