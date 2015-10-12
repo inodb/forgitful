@@ -20,5 +20,5 @@ crontab -e
 ```
 For my laptop for instance I run the script on every reboot by adding this line
 ```sh
-@reboot bash /Users/username/git/forgitful/forgitful /Users/username/git/forgitful/forgitful/production.yml
+@reboot bash /Users/username/git/forgitful/forgitful /Users/username/git/forgitful/production.yml
 ```
