@@ -1,5 +1,6 @@
 development:
   email: johndoe@me.com
   tracker: ./forgitful/dircontents.txt
+  forgitignore: /patho/to/git/forgitful/forgitignore
   repos:
     - $HOME/Documents
