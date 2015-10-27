@@ -40,7 +40,7 @@ for d in "${development_repos[@]}"; do
     cd $d || (echo "Not a directory: $d" && exit 1);
     git rev-parse > /dev/null || (echo "Not a git repo: $d" && exit 1);
     mkdir -p $(dirname $development_tracker);
-    find . -type f | grep -vf $development_forgitignore | xargs -I {} ls -lt --full-time '{}' > $development_tracker || (echo "find failed" && exit 1);
+    find . -type f | grep -vf $development_forgitignore | xargs -I {} ls -lt --time-style=long-iso '{}' > $development_tracker || (echo "find failed" && exit 1);
     git add $development_tracker;
     git status --porcelain | grep -qP '(^A|^M)' && ((echo "Changes in $HOSTNAME:$d"; git status) | mail -s "Forgit smth? Changes in $HOSTNAME:$d" $development_email);
 done
