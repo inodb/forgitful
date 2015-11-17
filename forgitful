@@ -11,6 +11,15 @@ fi
 # from http://stackoverflow.com/questions/59895
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+# Use gnu corutils gls for OSX
+# http://apple.stackexchange.com/questions/69223
+# http://stackoverflow.com/questions/3466166
+if [ "$(uname)" == "Darwin" ]; then
+    LS=gls
+else
+    LS=ls
+fi
+
 # bash yaml parser from https://gist.github.com/epiloque/8cf512c6d64641bde388
 parse_yaml() {
     local prefix=$2
@@ -40,7 +49,7 @@ for d in "${development_repos[@]}"; do
     cd $d || (echo "Not a directory: $d" && exit 1);
     git rev-parse > /dev/null || (echo "Not a git repo: $d" && exit 1);
     mkdir -p $(dirname $development_tracker);
-    find . -type f | grep -vf $development_forgitignore | xargs -I {} ls -lt --time-style=long-iso '{}' > $development_tracker || (echo "find failed" && exit 1);
+    find . -type f | grep -vf $development_forgitignore | xargs -I {} $LS -lt --time-style=long-iso '{}' > $development_tracker || (echo "find failed" && exit 1);
     git add $development_tracker;
     git status --porcelain | grep -qP '(^A|^M)' && ((echo "Changes in $HOSTNAME:$d"; git status) | mail -s "Forgit smth? Changes in $HOSTNAME:$d" $development_email);
 done
